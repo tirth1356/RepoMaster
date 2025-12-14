@@ -1,4 +1,4 @@
-const axios = require('axios');
+import axios from 'axios';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -10,7 +10,7 @@ const headers = GITHUB_TOKEN
 /**
  * Fetch repository metadata from GitHub
  */
-async function getRepositoryData(owner, repo) {
+export async function getRepositoryData(owner, repo) {
   try {
     const response = await axios.get(
       `${GITHUB_API_BASE}/repos/${owner}/${repo}`,
@@ -25,7 +25,7 @@ async function getRepositoryData(owner, repo) {
 /**
  * Fetch repository contents to analyze structure
  */
-async function getRepositoryContents(owner, repo, path = '') {
+export async function getRepositoryContents(owner, repo, path = '') {
   try {
     const response = await axios.get(
       `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${path}`,
@@ -40,7 +40,7 @@ async function getRepositoryContents(owner, repo, path = '') {
 /**
  * Fetch commit history
  */
-async function getCommitHistory(owner, repo, perPage = 100) {
+export async function getCommitHistory(owner, repo, perPage = 100) {
   try {
     const response = await axios.get(
       `${GITHUB_API_BASE}/repos/${owner}/${repo}/commits`,
@@ -58,7 +58,7 @@ async function getCommitHistory(owner, repo, perPage = 100) {
 /**
  * Fetch languages used in repository
  */
-async function getRepositoryLanguages(owner, repo) {
+export async function getRepositoryLanguages(owner, repo) {
   try {
     const response = await axios.get(
       `${GITHUB_API_BASE}/repos/${owner}/${repo}/languages`,
@@ -73,7 +73,7 @@ async function getRepositoryLanguages(owner, repo) {
 /**
  * Fetch README file
  */
-async function getReadme(owner, repo) {
+export async function getReadme(owner, repo) {
   try {
     const response = await axios.get(
       `${GITHUB_API_BASE}/repos/${owner}/${repo}/readme`,
@@ -91,7 +91,7 @@ async function getReadme(owner, repo) {
 /**
  * Fetch repository releases
  */
-async function getReleases(owner, repo) {
+export async function getReleases(owner, repo) {
   try {
     const response = await axios.get(
       `${GITHUB_API_BASE}/repos/${owner}/${repo}/releases`,
@@ -102,12 +102,3 @@ async function getReleases(owner, repo) {
     return [];
   }
 }
-
-module.exports = {
-  getRepositoryData,
-  getRepositoryContents,
-  getCommitHistory,
-  getRepositoryLanguages,
-  getReadme,
-  getReleases
-};
