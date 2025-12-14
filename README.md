@@ -2,8 +2,8 @@
 
 A modern web application that analyzes public GitHub repositories and provides actionable insights to help students and early-career developers improve their projects.
 
-**Try it live:** [https://repo-master-evaluator.vercel.app/](https://repo-master-evaluator.vercel.app/)
-**Watch Demo Video:** [Demo Video](./demo/demo.mp4)
+**Try it live:** [https://repo-master-evaluator.vercel.app/](https://repo-master-evaluator.vercel.app/) <br>
+**Watch Demo Video:** [Demo Video](./repomaster_demo.mp4)
 
 ## 🎯 Purpose
 
