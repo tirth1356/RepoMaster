@@ -49,7 +49,6 @@ export default function Analyze() {
 
   return (
     <div className="min-h-screen text-gray-200">
-      {/* NAVBAR */}
       <nav className="border-b border-purple-500/10 backdrop-blur-xl">
         <div className="container py-4">
           <Link
@@ -61,11 +60,9 @@ export default function Analyze() {
         </div>
       </nav>
 
-      {/* MAIN */}
       <div className="container py-20">
         {!results ? (
           <div className="max-w-2xl mx-auto">
-            {/* INPUT CARD */}
             <div className="card mb-12 hover:shadow-purple-500/30">
               <h1 className="text-4xl font-bold text-white mb-3">
                 Analyze Repository
@@ -99,29 +96,7 @@ export default function Analyze() {
                     loading ? 'opacity-70 cursor-not-allowed' : ''
                   }`}
                 >
-                  {loading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          fill="none"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                        />
-                      </svg>
-                      Analyzing...
-                    </span>
-                  ) : (
-                    'Analyze Repository'
-                  )}
+                  {loading ? 'Analyzing...' : 'Analyze Repository'}
                 </button>
               </form>
 
@@ -132,29 +107,8 @@ export default function Analyze() {
                 </div>
               )}
             </div>
-
-            {/* INFO CARDS */}
-            {!loading && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[
-                  ['✅ Public Repositories Only', 'Private repositories cannot be analyzed.'],
-                  ['⚡ Fast Analysis', 'Most repositories finish in under 30 seconds.'],
-                  ['🔒 Privacy First', 'No login, no storage, no tracking.'],
-                  ['📊 Honest Feedback', 'Rule-based analysis to help you improve.'],
-                ].map(([title, desc], i) => (
-                  <div
-                    key={i}
-                    className="card hover:-translate-y-1 hover:shadow-purple-500/20 transition-all"
-                  >
-                    <h3 className="font-semibold mb-2 text-gray-100">{title}</h3>
-                    <p className="text-gray-400 text-sm">{desc}</p>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         ) : (
-          /* RESULTS */
           <div ref={resultsRef} className="max-w-4xl mx-auto">
             <button
               onClick={handleNewAnalysis}
@@ -168,7 +122,6 @@ export default function Analyze() {
               <SummaryDisplay summary={results.summary} metadata={results.metadata} />
               <RoadmapDisplay roadmap={results.roadmap} />
 
-              {/* DETAILED SCORES */}
               <div className="card hover:shadow-purple-500/30">
                 <h2 className="text-2xl font-bold text-white mb-6">
                   Detailed Scores
@@ -176,7 +129,7 @@ export default function Analyze() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {Object.entries(results.scores)
-                    .filter(([key]) => key !== 'overall')
+                    .filter(([key]) => key !== 'overall' && key !== 'languages')
                     .map(([key, score]) => (
                       <div
                         key={key}
@@ -202,7 +155,6 @@ export default function Analyze() {
                 </div>
               </div>
 
-              {/* CTA */}
               <div className="card text-center hover:shadow-red-500/30">
                 <h3 className="text-2xl font-bold text-white mb-3">
                   Improve & Re-Analyze
@@ -220,7 +172,6 @@ export default function Analyze() {
         )}
       </div>
 
-      {/* FOOTER */}
       <footer className="border-t border-purple-500/10 py-8 text-center text-sm text-gray-400">
         © 2025 REPO MASTER · Built for developers
       </footer>
