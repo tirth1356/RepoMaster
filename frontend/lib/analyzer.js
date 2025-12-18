@@ -30,20 +30,13 @@ export async function analyzeRepositoryLogic(url) {
     getReleases(owner, repo)
   ]);
 
-  const scores = calculateScores(
-    repoData,
-    contents,
-    commits,
-    languages,
-    readme,
-    releases
-  );
+  const scores = calculateScores(repoData, contents, commits, languages, readme, releases);
 
   return {
     score: scores.overall,
     level: getLevel(scores.overall),
     scores,
-    summary: generateSummary(scores, repoData),
+    summary: generateSummary(scores, repoData, readme),
     roadmap: generateRoadmap(scores),
     metadata: {
       name: repoData.name,
@@ -61,34 +54,35 @@ function calculateScores(repoData, contents, commits, languages, readme, release
     structure: structureScore(contents),
     commits: commitScore(commits),
     languages: languageScore(languages),
-    community: communityScore(repoData),
     testing: testingScore(contents),
     versioning: versioningScore(releases),
+    community: communityScore(repoData),
     overall: 0
   };
 
   scores.overall = Math.round(
-    scores.documentation * 0.20 +
+    scores.documentation * 0.22 +
     scores.structure     * 0.15 +
     scores.commits       * 0.15 +
-    scores.languages     * 0.15 +
+    scores.languages     * 0.13 +
     scores.testing       * 0.15 +
-    scores.community     * 0.10 +
-    scores.versioning    * 0.10
+    scores.versioning    * 0.10 +
+    scores.community     * 0.10
   );
 
   return scores;
 }
 
 function documentationScore(readme, repoData) {
-  let s = 45;
+  let s = 35;
 
   if (readme?.content) {
     const t = readme.content.toLowerCase();
-    s += Math.min(25, readme.size / 400);
+    s += Math.min(30, readme.size / 350);
     if (t.includes('install') || t.includes('setup')) s += 10;
     if (t.includes('usage') || t.includes('example')) s += 10;
-    if (t.includes('api')) s += 5;
+    if (t.includes('license')) s += 5;
+    if (t.includes('contribut')) s += 5;
   }
 
   if (repoData.description) s += 10;
@@ -98,7 +92,7 @@ function documentationScore(readme, repoData) {
 }
 
 function structureScore(contents) {
-  let s = 50;
+  let s = 45;
   if (!Array.isArray(contents)) return s;
 
   const n = contents.map(f => f.name.toLowerCase());
@@ -113,17 +107,17 @@ function structureScore(contents) {
 }
 
 function commitScore(commits) {
-  if (!Array.isArray(commits) || commits.length === 0) return 45;
+  if (!Array.isArray(commits) || commits.length === 0) return 35;
 
-  let s = 40;
+  let s = 35;
 
-  if (commits.length >= 50) s += 20;
+  if (commits.length >= 40) s += 20;
   else if (commits.length >= 20) s += 15;
   else if (commits.length >= 10) s += 10;
 
   const meaningful = commits.filter(c => {
     const m = c.commit.message.toLowerCase();
-    return m.length > 12 && !m.startsWith('wip');
+    return m.length > 12 && !m.startsWith('wip') && !m.startsWith('temp');
   }).length;
 
   s += Math.min(25, (meaningful / commits.length) * 25);
@@ -141,13 +135,13 @@ function commitScore(commits) {
 }
 
 function languageScore(languages) {
-  if (!languages || Object.keys(languages).length === 0) return 55;
+  if (!languages || Object.keys(languages).length === 0) return 40;
 
   const e = Object.entries(languages);
   const total = e.reduce((a, [,b]) => a + b, 0);
-  const dominant = e.filter(([,b]) => b / total >= 0.1);
+  const dominant = e.filter(([,b]) => b / total >= 0.15);
 
-  let s = 45;
+  let s = 40;
 
   if (dominant.length >= 1) s += 20;
   if (dominant.length >= 2) s += 15;
@@ -155,13 +149,36 @@ function languageScore(languages) {
 
   const good = ['javascript','typescript','python','java','go','rust','c++','c','c#'];
 
-  if (dominant.some(([l]) => good.some(g => l.toLowerCase().includes(g)))) s += 15;
+  if (dominant.some(([l]) => good.some(g => l.toLowerCase().includes(g)))) s += 20;
+
+  return Math.min(100, s);
+}
+
+function testingScore(contents) {
+  let s = 40;
+  if (!Array.isArray(contents)) return s;
+
+  const t = contents.map(f => f.name.toLowerCase()).join(' ');
+  const i = ['test','spec','jest','mocha','pytest','vitest','coverage'];
+
+  if (i.some(x => t.includes(x))) s += 45;
+
+  return Math.min(100, s);
+}
+
+function versioningScore(releases) {
+  let s = 45;
+
+  if (Array.isArray(releases) && releases.length > 0) {
+    s += 30;
+    if (releases.some(r => /^\d+\.\d+\.\d+/.test(r.tag_name))) s += 15;
+  }
 
   return Math.min(100, s);
 }
 
 function communityScore(repoData) {
-  let s = 45;
+  let s = 40;
 
   if (repoData.stargazers_count > 0) s += 10;
   if (repoData.stargazers_count >= 10) s += 10;
@@ -172,43 +189,37 @@ function communityScore(repoData) {
   return Math.min(100, s);
 }
 
-function testingScore(contents) {
-  let s = 55;
-  if (!Array.isArray(contents)) return s;
-
-  const t = contents.map(f => f.name.toLowerCase()).join(' ');
-  const i = ['test','spec','jest','mocha','pytest','vitest','coverage'];
-
-  if (i.some(x => t.includes(x))) s += 35;
-
-  return Math.min(100, s);
-}
-
-function versioningScore(releases) {
-  let s = 55;
-
-  if (Array.isArray(releases) && releases.length > 0) {
-    s += 25;
-    if (releases.some(r => /^\d+\.\d+\.\d+/.test(r.tag_name))) s += 20;
-  }
-
-  return Math.min(100, s);
-}
-
 function getLevel(score) {
   if (score >= 75) return 'Advanced';
   if (score >= 55) return 'Intermediate';
   return 'Beginner';
 }
 
-function generateSummary(scores, repoData) {
-  let text = `This ${repoData.language || 'multi-language'} repository reflects a ${getLevel(scores.overall).toLowerCase()} level of engineering quality. `;
+function generateSummary(scores, repoData, readme) {
+  const strengths = [];
+  const gaps = [];
 
-  if (scores.documentation >= 70) text += 'Documentation is well written. ';
-  if (scores.testing >= 70) text += 'Testing practices are present. ';
-  if (scores.commits >= 70) text += 'Commit history is consistent. ';
+  if (scores.documentation >= 70) strengths.push('clear documentation');
+  else gaps.push('improve README and usage instructions');
 
-  text += `The project currently has ${repoData.stargazers_count} stars.`;
+  if (scores.testing >= 70) strengths.push('testing practices');
+  else gaps.push('add automated tests');
+
+  if (scores.commits >= 70) strengths.push('consistent commit history');
+  else gaps.push('maintain cleaner commit practices');
+
+  if (scores.structure >= 70) strengths.push('well-organized structure');
+  else gaps.push('organize project structure');
+
+  let text = `This ${repoData.language || 'multi-language'} repository represents a ${getLevel(scores.overall).toLowerCase()}-level project. `;
+
+  if (strengths.length)
+    text += `Key strengths include ${strengths.join(', ')}. `;
+
+  if (gaps.length)
+    text += `To improve further, focus on ${gaps.slice(0,2).join(' and ')}. `;
+
+  text += `The project has ${repoData.stargazers_count} stars and reflects active development patterns.`;
 
   return text;
 }
@@ -216,12 +227,53 @@ function generateSummary(scores, repoData) {
 function generateRoadmap(scores) {
   const r = [];
 
-  if (scores.documentation < 70) r.push({ priority: 'High', title: 'Improve Documentation' });
-  if (scores.testing < 70) r.push({ priority: 'High', title: 'Add Test Coverage' });
-  if (scores.structure < 70) r.push({ priority: 'Medium', title: 'Improve Project Structure' });
-  if (scores.versioning < 70) r.push({ priority: 'Medium', title: 'Add Releases & Versioning' });
+  if (scores.documentation < 70)
+    r.push({
+      priority: 'High',
+      title: 'Improve Documentation',
+      description: 'Add setup, usage, and contribution guidelines',
+      impact: 'Improves usability and onboarding'
+    });
 
-  if (!r.length) r.push({ priority: 'Low', title: 'Maintain Current Quality' });
+  if (scores.testing < 70)
+    r.push({
+      priority: 'High',
+      title: 'Add Test Coverage',
+      description: 'Write unit and integration tests',
+      impact: 'Increases reliability and confidence'
+    });
+
+  if (scores.commits < 70)
+    r.push({
+      priority: 'Medium',
+      title: 'Improve Commit Practices',
+      description: 'Use meaningful commit messages',
+      impact: 'Creates a cleaner project history'
+    });
+
+  if (scores.structure < 70)
+    r.push({
+      priority: 'Medium',
+      title: 'Organize Project Structure',
+      description: 'Introduce src, tests, and docs folders',
+      impact: 'Improves maintainability'
+    });
+
+  if (scores.versioning < 70)
+    r.push({
+      priority: 'Medium',
+      title: 'Add Releases & Versioning',
+      description: 'Create tagged releases using semantic versioning',
+      impact: 'Helps users track changes'
+    });
+
+  if (!r.length)
+    r.push({
+      priority: 'Low',
+      title: 'Maintain Quality',
+      description: 'Continue following current best practices',
+      impact: 'Ensures long-term project health'
+    });
 
   return r;
 }
