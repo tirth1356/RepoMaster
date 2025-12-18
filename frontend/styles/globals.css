@@ -2,9 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* =========================
-   RESET & BASE
-========================= */
 * {
   margin: 0;
   padding: 0;
@@ -28,18 +25,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* =========================
-   CONTAINER
-========================= */
 .container {
   @apply max-w-6xl mx-auto px-4;
 }
 
-/* =========================
-   BUTTONS
-========================= */
-
-/* Primary Gradient Button */
 .btn-primary {
   @apply relative overflow-hidden
   bg-gradient-to-r from-purple-600 via-fuchsia-600 to-red-500
@@ -51,17 +40,11 @@ body {
   active:scale-95;
 }
 
-/* Shine animation */
 .btn-primary::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    120deg,
-    transparent 20%,
-    rgba(255,255,255,0.35),
-    transparent 80%
-  );
+  background: linear-gradient(120deg, transparent 20%, rgba(255,255,255,0.35), transparent 80%);
   transform: translateX(-120%);
   transition: transform 0.8s ease;
 }
@@ -70,7 +53,6 @@ body {
   transform: translateX(120%);
 }
 
-/* Secondary Glass Button */
 .btn-secondary {
   @apply relative
   bg-white/5 backdrop-blur-md
@@ -85,9 +67,6 @@ body {
   active:scale-95;
 }
 
-/* =========================
-   CARDS
-========================= */
 .card {
   @apply bg-gradient-to-br from-purple-950/70 to-slate-900/80
   backdrop-blur-xl
@@ -99,9 +78,6 @@ body {
   hover:shadow-2xl hover:shadow-purple-500/20;
 }
 
-/* =========================
-   INPUTS
-========================= */
 .input-field {
   @apply w-full px-4 py-3 rounded-xl
   bg-slate-900 text-gray-200
@@ -113,25 +89,16 @@ body {
   focus:border-purple-500;
 }
 
-/* =========================
-   LOADING
-========================= */
 .loading-spinner {
   @apply inline-block animate-spin h-5 w-5 text-purple-400;
 }
 
-/* =========================
-   SCORE DISPLAY
-========================= */
 .score-display {
   @apply text-6xl font-extrabold
   bg-gradient-to-r from-purple-400 via-fuchsia-400 to-red-400
   bg-clip-text text-transparent;
 }
 
-/* =========================
-   PROGRESS BAR
-========================= */
 .progress-bar {
   @apply w-full bg-slate-800 rounded-full h-3 overflow-hidden;
 }
@@ -152,42 +119,21 @@ body {
   @apply bg-gradient-to-r from-green-400 to-emerald-500;
 }
 
-/* =========================
-   ANIMATIONS
-========================= */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
 @keyframes slideUp {
-  from {
-    transform: translateY(30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes pulseGlow {
-  0%, 100% {
-    box-shadow: 0 0 12px rgba(168,85,247,0.3);
-  }
-  50% {
-    box-shadow: 0 0 25px rgba(239,68,68,0.45);
-  }
+  0%, 100% { box-shadow: 0 0 12px rgba(168,85,247,0.3); }
+  50% { box-shadow: 0 0 25px rgba(239,68,68,0.45); }
 }
 
-.fade-in {
-  animation: fadeIn 0.6s ease-in;
-}
-
-.slide-up {
-  animation: slideUp 0.6s ease-out;
-}
-
-.glow {
-  animation: pulseGlow 2.5s infinite;
-}
+.fade-in { animation: fadeIn 0.6s ease-in; }
+.slide-up { animation: slideUp 0.6s ease-out; }
+.glow { animation: pulseGlow 2.5s infinite; }
