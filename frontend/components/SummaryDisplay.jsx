@@ -25,16 +25,14 @@ export default function SummaryDisplay({ summary, metadata }) {
           </p>
         </div>
 
-        {metadata.language && (
-          <div className="bg-white/5 border border-purple-500/20 rounded-xl p-4">
-            <p className="text-sm text-gray-400 font-semibold mb-1">
-              Primary Language
-            </p>
-            <p className="text-lg text-gray-100 font-medium">
-              {metadata.language}
-            </p>
-          </div>
-        )}
+        <div className="bg-white/5 border border-purple-500/20 rounded-xl p-4">
+          <p className="text-sm text-gray-400 font-semibold mb-1">
+            Primary Language
+          </p>
+          <p className="text-lg text-gray-100 font-medium">
+            {metadata.primaryLanguage || 'Not detected'}
+          </p>
+        </div>
 
         <div className="bg-white/5 border border-purple-500/20 rounded-xl p-4">
           <p className="text-sm text-gray-400 font-semibold mb-1">
