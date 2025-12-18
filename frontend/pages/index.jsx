@@ -18,7 +18,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-gray-200">
-      {/* Navigation */}
       <nav className="border-b border-slate-800">
         <div className="container py-4 flex items-center justify-between">
           <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
@@ -40,7 +39,6 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero */}
       <section className="container py-24">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-5xl md:text-6xl font-extrabold mb-6">
@@ -76,7 +74,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How it works */}
       <section id="how-it-works" className="py-20 border-t border-slate-800">
         <div className="container">
           <h2 className="text-4xl font-bold text-center mb-16">How It Works</h2>
@@ -87,10 +84,7 @@ export default function Home() {
               ['2', 'Automated Analysis'],
               ['3', 'Get Feedback'],
             ].map(([num, title]) => (
-              <div
-                key={num}
-                className={`card text-center ${cardHover}`}
-              >
+              <div key={num} className={`card text-center ${cardHover}`}>
                 <div className="w-14 h-14 rounded-full bg-cyan-500/10 text-cyan-400 flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
                   {num}
                 </div>
@@ -106,7 +100,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* What We Evaluate */}
       <section className="py-20 bg-slate-950">
         <div className="container">
           <h2 className="text-4xl font-bold text-center mb-16">
@@ -122,10 +115,7 @@ export default function Home() {
               ['🌐 Languages', 'Tech stack decisions'],
               ['🚀 Releases', 'Versioning & releases'],
             ].map(([title, desc]) => (
-              <div
-                key={title}
-                className={`card ${cardHover}`}
-              >
+              <div key={title} className={`card ${cardHover}`}>
                 <h3 className="text-xl font-semibold mb-2">{title}</h3>
                 <p className="text-gray-400">{desc}</p>
               </div>
@@ -134,7 +124,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t border-slate-800 py-10 text-center text-gray-400 text-sm">
         © 2025 REPO MASTER · No login · No database · Pure analysis
       </footer>
