@@ -1,4 +1,4 @@
-// pages/api/analyze.js
+
 import { analyzeRepositoryLogic } from '../../lib/analyzer.js';
 
 export default async function handler(req, res) {
