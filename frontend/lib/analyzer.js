@@ -7,19 +7,21 @@ import {
   getReleases
 } from './githubService.js';
 
-/**
- * Main function to analyze a GitHub repository by URL
- */
 export async function analyzeRepositoryLogic(url) {
-  // Extract owner and repo from URL
   const match = url.match(/github\.com\/([^/]+)\/([^/]+)/);
   if (!match) throw new Error('Invalid GitHub repository URL');
 
   const owner = match[1];
   const repo = match[2];
 
-  // Fetch all repository data
-  const [repoData, contents, commits, languages, readme, releases] = await Promise.all([
+  const [
+    repoData,
+    contents,
+    commits,
+    languages,
+    readme,
+    releases
+  ] = await Promise.all([
     getRepositoryData(owner, repo),
     getRepositoryContents(owner, repo),
     getCommitHistory(owner, repo),
@@ -28,14 +30,20 @@ export async function analyzeRepositoryLogic(url) {
     getReleases(owner, repo)
   ]);
 
-  // Calculate scores
-  const scores = calculateScores(repoData, contents, commits, languages, readme, releases);
+  const scores = calculateScores(
+    repoData,
+    contents,
+    commits,
+    languages,
+    readme,
+    releases
+  );
 
   return {
     score: scores.overall,
     level: getLevel(scores.overall),
     scores,
-    summary: generateSummary(scores, repoData, readme),
+    summary: generateSummary(scores, repoData),
     roadmap: generateRoadmap(scores),
     metadata: {
       name: repoData.name,
@@ -47,210 +55,173 @@ export async function analyzeRepositoryLogic(url) {
   };
 }
 
-/**
- * Calculate evaluation scores
- */
 function calculateScores(repoData, contents, commits, languages, readme, releases) {
   const scores = {
-    documentation: calculateDocumentationScore(readme, repoData),
-    structure: calculateStructureScore(contents),
-    commits: calculateCommitScore(commits),
-    languages: calculateLanguageScore(languages),
-    community: calculateCommunityScore(repoData),
-    testing: calculateTestingScore(contents),
-    versioning: calculateVersioningScore(releases, commits),
+    documentation: documentationScore(readme, repoData),
+    structure: structureScore(contents),
+    commits: commitScore(commits),
+    languages: languageScore(languages),
+    community: communityScore(repoData),
+    testing: testingScore(contents),
+    versioning: versioningScore(releases),
     overall: 0
   };
 
   scores.overall = Math.round(
-    scores.documentation * 0.2 +
-    scores.structure * 0.15 +
-    scores.commits * 0.15 +
-    scores.languages * 0.1 +
-    scores.community * 0.15 +
-    scores.testing * 0.15 +
-    scores.versioning * 0.1
+    scores.documentation * 0.20 +
+    scores.structure     * 0.15 +
+    scores.commits       * 0.15 +
+    scores.languages     * 0.15 +
+    scores.testing       * 0.15 +
+    scores.community     * 0.10 +
+    scores.versioning    * 0.10
   );
 
   return scores;
 }
 
-/**
- * Scoring helpers
- */
-function calculateDocumentationScore(readme, repoData) {
-  let score = 0;
-  if (readme) {
-    const content = readme.content.toLowerCase();
-    const size = readme.size;
-    score += Math.min(50, (size / 500) * 50);
-    if (content.includes('install') || content.includes('setup')) score += 10;
-    if (content.includes('usage') || content.includes('example')) score += 10;
-    if (content.includes('license')) score += 5;
-    if (content.includes('contribut')) score += 5;
+function documentationScore(readme, repoData) {
+  let s = 45;
+
+  if (readme?.content) {
+    const t = readme.content.toLowerCase();
+    s += Math.min(25, readme.size / 400);
+    if (t.includes('install') || t.includes('setup')) s += 10;
+    if (t.includes('usage') || t.includes('example')) s += 10;
+    if (t.includes('api')) s += 5;
   }
-  if (repoData.license) score += 10;
-  return Math.min(100, score);
+
+  if (repoData.description) s += 10;
+  if (repoData.license) s += 10;
+
+  return Math.min(100, s);
 }
 
-function calculateStructureScore(contents) {
-  let score = 50;
-  if (!Array.isArray(contents)) return score;
-  const fileNames = contents.map(f => f.name.toLowerCase());
-  if (fileNames.some(n => n === 'src')) score += 10;
-  if (fileNames.some(n => n === 'tests' || n === 'test')) score += 10;
-  if (fileNames.some(n => n === 'docs' || n === 'documentation')) score += 5;
-  if (fileNames.some(n => n === '.gitignore')) score += 5;
-  if (fileNames.some(n => n === 'package.json' || n === 'setup.py' || n === 'go.mod')) score += 10;
-  return Math.min(100, score);
+function structureScore(contents) {
+  let s = 50;
+  if (!Array.isArray(contents)) return s;
+
+  const n = contents.map(f => f.name.toLowerCase());
+
+  if (n.includes('src')) s += 10;
+  if (n.includes('tests') || n.includes('test')) s += 10;
+  if (n.includes('docs')) s += 5;
+  if (n.includes('.gitignore')) s += 5;
+  if (n.some(x => ['package.json','setup.py','go.mod','pom.xml'].includes(x))) s += 10;
+
+  return Math.min(100, s);
 }
 
-function calculateCommitScore(commits) {
-  if (!Array.isArray(commits) || commits.length === 0) return 20;
-  let score = 0;
-  if (commits.length >= 50) score += 20;
-  else if (commits.length >= 20) score += 15;
-  else if (commits.length >= 10) score += 10;
-  else score += 5;
+function commitScore(commits) {
+  if (!Array.isArray(commits) || commits.length === 0) return 45;
 
-  const meaningfulCommits = commits.filter(c => {
-    const msg = c.commit.message.toLowerCase();
-    const length = c.commit.message.length;
-    return length > 10 && !msg.startsWith('wip') && !msg.startsWith('temp');
+  let s = 40;
+
+  if (commits.length >= 50) s += 20;
+  else if (commits.length >= 20) s += 15;
+  else if (commits.length >= 10) s += 10;
+
+  const meaningful = commits.filter(c => {
+    const m = c.commit.message.toLowerCase();
+    return m.length > 12 && !m.startsWith('wip');
   }).length;
 
-  score += (meaningfulCommits / commits.length) * 60;
+  s += Math.min(25, (meaningful / commits.length) * 25);
 
-  const threeMonthsAgo = new Date();
-  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-  const recentCommits = commits.filter(c => new Date(c.commit.author.date) > threeMonthsAgo);
-  if (recentCommits.length > 0) score += 20;
+  const recent = commits.some(c => {
+    const d = new Date(c.commit.author.date);
+    const m = new Date();
+    m.setMonth(m.getMonth() - 3);
+    return d > m;
+  });
 
-  return Math.min(100, score);
+  if (recent) s += 15;
+
+  return Math.min(100, s);
 }
 
-function calculateLanguageScore(languages) {
-  if (!languages || Object.keys(languages).length === 0) return 30;
-  const languageCount = Object.keys(languages).length;
-  let score = 0;
-  if (languageCount >= 2) score += 30;
-  if (languageCount >= 3) score += 20;
+function languageScore(languages) {
+  if (!languages || Object.keys(languages).length === 0) return 55;
 
-  const goodLanguages = ['python', 'javascript', 'typescript', 'java', 'go', 'rust', 'c++'];
-  if (Object.keys(languages).some(lang => goodLanguages.some(g => lang.toLowerCase().includes(g)))) score += 40;
+  const e = Object.entries(languages);
+  const total = e.reduce((a, [,b]) => a + b, 0);
+  const dominant = e.filter(([,b]) => b / total >= 0.1);
 
-  return Math.min(100, score);
+  let s = 45;
+
+  if (dominant.length >= 1) s += 20;
+  if (dominant.length >= 2) s += 15;
+  if (dominant.length >= 3) s += 5;
+
+  const good = ['javascript','typescript','python','java','go','rust','c++','c','c#'];
+
+  if (dominant.some(([l]) => good.some(g => l.toLowerCase().includes(g)))) s += 15;
+
+  return Math.min(100, s);
 }
 
-function calculateCommunityScore(repoData) {
-  let score = 0;
-  if (repoData.stargazers_count >= 100) score += 30;
-  else if (repoData.stargazers_count >= 10) score += 20;
-  else if (repoData.stargazers_count > 0) score += 10;
+function communityScore(repoData) {
+  let s = 45;
 
-  if (repoData.forks_count >= 10) score += 20;
-  else if (repoData.forks_count > 0) score += 10;
+  if (repoData.stargazers_count > 0) s += 10;
+  if (repoData.stargazers_count >= 10) s += 10;
+  if (repoData.forks_count > 0) s += 10;
+  if (repoData.watchers_count > 0) s += 10;
+  if (repoData.description?.length > 20) s += 10;
 
-  if (repoData.watchers_count >= 10) score += 15;
-  if (repoData.open_issues_count < 20) score += 10;
-  if (repoData.description && repoData.description.length > 20) score += 15;
-
-  return Math.min(100, score);
+  return Math.min(100, s);
 }
 
-function calculateTestingScore(contents) {
-  let score = 30;
-  if (!Array.isArray(contents)) return score;
-  const allFiles = contents.map(f => f.name.toLowerCase()).join(' ');
-  const testIndicators = ['test','spec','coverage','jest','mocha','pytest','unittest','gotest'];
-  if (testIndicators.some(ind => allFiles.includes(ind))) score += 70;
-  return Math.min(100, score);
+function testingScore(contents) {
+  let s = 55;
+  if (!Array.isArray(contents)) return s;
+
+  const t = contents.map(f => f.name.toLowerCase()).join(' ');
+  const i = ['test','spec','jest','mocha','pytest','vitest','coverage'];
+
+  if (i.some(x => t.includes(x))) s += 35;
+
+  return Math.min(100, s);
 }
 
-function calculateVersioningScore(releases, commits) {
-  let score = 30;
+function versioningScore(releases) {
+  let s = 55;
+
   if (Array.isArray(releases) && releases.length > 0) {
-    if (releases.length >= 5) score += 40;
-    else if (releases.length >= 2) score += 30;
-    else score += 20;
-    if (releases.filter(r => /^\d+\.\d+\.\d+/.test(r.tag_name)).length > 0) score += 10;
+    s += 25;
+    if (releases.some(r => /^\d+\.\d+\.\d+/.test(r.tag_name))) s += 20;
   }
-  return Math.min(100, score);
+
+  return Math.min(100, s);
 }
 
 function getLevel(score) {
   if (score >= 75) return 'Advanced';
-  if (score >= 50) return 'Intermediate';
+  if (score >= 55) return 'Intermediate';
   return 'Beginner';
 }
 
-function generateSummary(scores, repoData, readme) {
-  const level = getLevel(scores.overall);
-  const strengths = [];
-  const improvements = [];
+function generateSummary(scores, repoData) {
+  let text = `This ${repoData.language || 'multi-language'} repository reflects a ${getLevel(scores.overall).toLowerCase()} level of engineering quality. `;
 
-  if (scores.documentation >= 70) strengths.push('comprehensive documentation');
-  if (scores.commits >= 70) strengths.push('consistent commit history');
-  if (scores.community >= 70) strengths.push('good community engagement');
-  if (scores.testing >= 70) strengths.push('solid test coverage');
+  if (scores.documentation >= 70) text += 'Documentation is well written. ';
+  if (scores.testing >= 70) text += 'Testing practices are present. ';
+  if (scores.commits >= 70) text += 'Commit history is consistent. ';
 
-  if (scores.documentation < 50) improvements.push('improve README with setup and usage instructions');
-  if (scores.testing < 50) improvements.push('add unit and integration tests');
-  if (scores.commits < 50) improvements.push('establish more consistent commit practices');
-  if (scores.structure < 50) improvements.push('better organize project structure');
-  if (scores.versioning < 50) improvements.push('create releases and version tags');
+  text += `The project currently has ${repoData.stargazers_count} stars.`;
 
-  let summary = `This ${repoData.language || 'general'} repository demonstrates a ${level.toLowerCase()}-level project. `;
-  if (strengths.length) summary += `Strengths include: ${strengths.join(', ')}. `;
-  if (improvements.length) summary += `To improve, focus on: ${improvements.slice(0,2).join(' and ')}. `;
-  else summary += `This is a well-maintained project with good practices applied. `;
-  summary += `The repository has ${repoData.stars || repoData.stargazers_count} stars and reflects ${repoData.language || 'mixed'} language usage.`;
-  return summary;
+  return text;
 }
 
 function generateRoadmap(scores) {
-  const roadmap = [];
-  if (scores.documentation < 70) roadmap.push({
-    priority: 'High',
-    title: 'Improve Documentation',
-    description: 'Enhance README with setup, usage, and contribution instructions',
-    impact: 'Helps users understand and use your project'
-  });
-  if (scores.testing < 70) roadmap.push({
-    priority: 'High',
-    title: 'Add Test Coverage',
-    description: 'Write unit and integration tests',
-    impact: 'Ensures code quality'
-  });
-  if (scores.commits < 70) roadmap.push({
-    priority: 'Medium',
-    title: 'Improve Commit Practices',
-    description: 'Write meaningful commit messages',
-    impact: 'Makes history cleaner'
-  });
-  if (scores.structure < 70) roadmap.push({
-    priority: 'Medium',
-    title: 'Organize Project Structure',
-    description: 'Create directories like /src, /tests, /docs',
-    impact: 'Improves maintainability'
-  });
-  if (scores.versioning < 70) roadmap.push({
-    priority: 'Medium',
-    title: 'Implement Versioning',
-    description: 'Create releases and use semantic versioning',
-    impact: 'Helps users track changes'
-  });
-  if (scores.community < 70) roadmap.push({
-    priority: 'Low',
-    title: 'Increase Community Engagement',
-    description: 'Add badges, improve description, enable issues/discussions',
-    impact: 'Attracts contributors'
-  });
-  if (!roadmap.length) roadmap.push({
-    priority: 'Low',
-    title: 'Maintain Excellence',
-    description: 'Continue following best practices',
-    impact: 'Ensures long-term success'
-  });
-  return roadmap;
+  const r = [];
+
+  if (scores.documentation < 70) r.push({ priority: 'High', title: 'Improve Documentation' });
+  if (scores.testing < 70) r.push({ priority: 'High', title: 'Add Test Coverage' });
+  if (scores.structure < 70) r.push({ priority: 'Medium', title: 'Improve Project Structure' });
+  if (scores.versioning < 70) r.push({ priority: 'Medium', title: 'Add Releases & Versioning' });
+
+  if (!r.length) r.push({ priority: 'Low', title: 'Maintain Current Quality' });
+
+  return r;
 }
